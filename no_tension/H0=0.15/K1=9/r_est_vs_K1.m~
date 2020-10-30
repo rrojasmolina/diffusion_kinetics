@@ -1,0 +1,199 @@
+clear all
+close all
+
+%This files computes the estimated bud radius based on the spontaneous
+%curvature C0 and the average protein density in the bud region
+
+hold on
+
+sz=40;
+C_0=5; %dimensionless spontaneous curvature
+
+
+dt=6.3e-4*2;
+A=readtable('./tcut_and_rbud_vs_K1.txt');
+
+
+tcut=A.tcut; %scission time
+l1=round(tcut(1)/dt);
+K1=A.K1; %recruitment parameter
+
+r_est=zeros(size(t));
+index_bud=zeros(size(t));
+
+filename1 = sprintf('./K2=3/min7_100_3_%d.txt',l1) ;
+delimiterIn = ' ';
+A1 = importdata(filename1,delimiterIn);
+r1=A1(4,:);
+x1=A1(1,:);
+area1=A1(5,:);
+sigma1=A1(2,:);
+
+A_1=readtable('./r_and_neck_vs_t.txt');
+tcut1=A_1.tcut; %necks at different times
+sneck1=A_1.s_neck; %location of the neck alog s
+[dummy index] = min(abs(tcut1-t(1)));
+lim1=sneck1(index); %
+abud1=area1(lim1);
+int1=find(area1<abud1);
+area_int1=area1(int1); %area interval comprised between up to the neck
+sigma_int1=sigma1(int1); %sigma defined on the bud only
+sigmat1=trapz(area_int1,sigma_int1)/abud1;
+r_est(1)=1./(sigmat1*C_0);
+    
+
+
+   
+k2=round(t(2)/dt);
+filename2 = sprintf('./K2=1/K2=1/min7_1_1_%d.txt',k2) ;
+delimiterIn = ' ';
+A2 = importdata(filename2,delimiterIn);
+r2=A2(4,:);
+area2=A2(5,:);
+sigma2=A2(2,:);
+ A_2=readtable('./K2=1/neck_vs_t_1.txt');
+ tneck2=A_2.t; %necks at different times
+ ineck2=A_2.ineck; %location of the neck alog s
+ [dummy index] = min(abs(tneck2-t(2)));
+ lim2=ineck2(index); %
+ abud2=area2(lim2);
+ int2=find(area2<abud2);
+ area_int2=area2(int2); %area interval comprised between up to the neck
+ sigma_int2=sigma2(int2); %sigma defined on the bud only
+ sigmat2=trapz(area_int2,sigma_int2)/abud2;
+ r_est(2)=1./(sigmat2*C_0);
+    
+k3=round(t(3)/dt);
+filename3 = sprintf('./K2=3/K2=3/min7_1_3_%d.txt',k3) ;
+delimiterIn = ' ';
+A3 = importdata(filename3,delimiterIn);
+area3=A3(5,:);
+sigma3=A3(2,:);
+ A_3=readtable('./K2=3/neck_vs_t_1.txt');
+tneck3=A_3.t; %necks at different times
+ineck3=A_3.ineck; %location of the neck alog s
+[dummy index] = min(abs(tneck3-t(3)));
+lim3=ineck3(index); %
+abud3=area3(lim3);
+int3=find(area3<abud3);
+area_int3=area3(int3); %area interval comprised between up to the neck
+sigma_int3=sigma3(int3); %sigma defined on the bud only
+sigmat3=trapz(area_int3,sigma_int3)/abud3;
+r_est(3)=1./(sigmat3*C_0);
+     
+k4=round(t(4)/dt);
+filename4 = sprintf('./K2=5/K2=5/min7_1_5_%d.txt',k4) ;
+delimiterIn = ' ';
+A4 = importdata(filename4,delimiterIn);
+area4=A4(5,:);
+sigma4=A4(2,:);
+ A_4=readtable('./K2=5/neck_vs_t_1.txt');
+ tneck4=A_4.t; %necks at different times
+ ineck4=A_4.ineck; %location of the neck alog s
+ [dummy index] = min(abs(tneck4-t(4)));
+ lim4=ineck4(index); %
+ abud4=area4(lim4);
+ int4=find(area4<abud4);
+ area_int4=area4(int4); %area interval comprised between up to the neck
+ sigma_int4=sigma4(int4); %sigma defined on the bud only
+ sigmat4=trapz(area_int4,sigma_int4)/abud4;
+ r_est(4)=1./(sigmat4*C_0);
+    
+
+ 
+% 
+k5=round(t(5)/dt);
+filename5 = sprintf('./K2=8/K2=8/min7_1_8_%d.txt',k5) ;
+delimiterIn = ' ';
+A5 = importdata(filename5,delimiterIn);
+area5=A5(5,:);
+sigma5=A5(2,:);
+ A_5=readtable('./K2=8/neck_vs_t_1.txt');
+ tneck5=A_5.t; %necks at different times
+ ineck5=A_5.ineck; %location of the neck alog s
+ [dummy index] = min(abs(tneck5-t(5)));
+ lim5=ineck5(index); %
+ abud5=area5(lim5);
+ int5=find(area5<abud5);
+ area_int5=area5(int5); %area interval comprised between up to the neck
+ sigma_int5=sigma5(int5); %sigma defined on the bud only
+ sigmat5=trapz(area_int5,sigma_int5)/abud5;
+ r_est(5)=1./(sigmat5*C_0);
+    
+
+ 
+ k6=round(t(6)/dt);
+filename6 = sprintf('./K2=10/K2=10/min7_1_10_%d.txt',k6) ;
+delimiterIn = ' ';
+A6 = importdata(filename6,delimiterIn);
+area6=A6(5,:);
+sigma6=A6(2,:);
+A_6=readtable('./K2=10/neck_vs_t_1.txt');
+tneck6=A_6.t; %necks at different times
+ineck6=A_6.ineck; %location of the neck alog s
+[dummy index] = min(abs(tneck6-t(6)));
+lim6=ineck6(index); %
+abud6=area6(lim6);
+int6=find(area6<abud6);
+area_int6=area6(int6); %area interval comprised between up to the neck
+sigma_int6=sigma6(int6); %sigma defined on the bud only
+sigmat6=trapz(area_int6,sigma_int6)/abud6;
+r_est(6)=1./(sigmat6*C_0);
+
+ 
+ k7=round(t(7)/dt);
+filename7 = sprintf('./K2=15/K2=15/min7_1_15_%d.txt',k7) ;
+delimiterIn = ' ';
+A7 = importdata(filename7,delimiterIn);
+area7=A7(5,:);
+sigma7=A7(2,:);
+A_7=readtable('./K2=15/neck_vs_t_1.txt');
+tneck7=A_7.t; %necks at different times
+ineck7=A_7.ineck; %location of the neck alog s
+[dummy index] = min(abs(tneck7-t(7)));
+lim7=ineck7(index); %
+abud7=area7(lim7);
+int7=find(area7<abud7);
+area_int7=area7(int7); %area interval comprised between up to the neck
+sigma_int7=sigma7(int7); %sigma defined on the bud only
+sigmat7=trapz(area_int7,sigma_int7)/abud7;
+r_est(7)=1./(sigmat7*C_0);
+    
+k8=round(t(8)/dt);
+filename8 = sprintf('./K2=20/K2=20/min7_1_20_%d.txt',k8) ;
+delimiterIn = ' ';
+A8 = importdata(filename8,delimiterIn);
+area8=A8(5,:);
+sigma8=A8(2,:);
+A_8=readtable('./K2=20/neck_vs_t_1.txt');
+tneck8=A_8.t; %necks at different times
+ineck8=A_8.ineck; %location of the neck alog s
+[dummy index] = min(abs(tneck8-t(8)));
+lim8=ineck8(index); %
+abud8=area8(lim8);
+int8=find(area8<abud8);
+area_int8=area8(int8); %area interval comprised between up to the neck
+sigma_int8=sigma8(int8); %sigma defined on the bud only
+sigmat8=trapz(area_int8,sigma_int8)/abud8;
+r_est(8)=1./(sigmat8*C_0);
+
+
+% scatter(K1,r_bud,sz,'r','filled')
+% xlabel('K_1')
+% ylabel('Bud size')
+% title(' Bud size vs K_1', 'FontSize',18)
+
+T = table(r_est, K1, index_bud,'VariableNames', { 'r_bud', 'K1', 'index_bud'} );
+ 
+ writetable(T, './r_vs_K1_sigmat.txt')
+ 
+
+
+
+
+
+
+  
+ 
+
+

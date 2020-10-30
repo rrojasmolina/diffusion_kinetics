@@ -1,0 +1,152 @@
+%This file computes the protein density and membrane shape associated to a
+%diffuso-kinetic protein dynamics on the membrane, where the surface
+%tension is small but finite
+
+clear all
+ close all
+global a epsilon  x1 alphat sigma2 a_0 area C_0_ lambda_ A1
+
+
+            %%%%%% Parameters of the model %%%%%%%%%%%%%%%%%%
+            
+            K2_=45.0; %constant protein detachment
+            K1_=9.0; %constant protein recruitment, K1=K2/5
+            H_0=0.15; %threshold of the membrane curvature that triggers protein recruitment
+            sigma_eq=0.2; %equilibrium protein density, defined as sigma_eq = K1/K2
+            C_0=0.1; %spontaneous curvature of the protein in nanometers
+            L=1/(sigma_eq*C_0); %length scale of the system
+            B=20; %bending moment in units of kbT
+            ap=27; %area of one protein in nm^2
+            C_0_=C_0*L; % adimensional spontaneous curvature
+            Lambda_ =(ap*B)/L^2; %adimensional protein mobility
+            mu=C_0_*Lambda_;
+            lambda_=0.01; %adimensional surface tension
+            
+            %%%%%%%%%%% Numerical parameters to solve the shape equations
+            %%%%%%%%%%% and the diffuso-kinetic equation
+            
+            a=50.0; %lenght of the spatial dimension (arclength)
+            c1=1.0; %initial guess of the free parameter in the system of differential equations
+            dt=6.3e-4*2; %time interval
+            t=0;
+            t_steps=2000; %number of time steps
+            n_space=4000; %number of points in the spatial dimension
+            epsilon=1E-3; %small parameter used to regularize the boundary conditions of the shape equations
+            x1=linspace(epsilon,a,n_space); %uniform spatial mesh
+            ds=x1(2)-x1(1); 
+            F1=dt/ds^2; %numerical parameter of the evolution equation for the protein density
+            F2=dt/ds; %numerical parameter of the evolution equation for the protein density
+            
+            %%%%%%%%% Parameters of the initial protein density %%%%%%%%
+       
+            a_0=0.1; %amplitude of the initial gaussian density
+            sigma2=0.3; %widht of the gaussian function
+            
+            %%%%%Solving the shape equations with the initial protein
+            %%%%%density using bvp4c, where the initial guess is built 
+            %%%%%based considering a non vanishing tension
+            
+            filename1 = sprintf('./tension_guesses/guess_1.txt') ; %file to build the initial guess
+            delimiterIn = ' ';
+            A1 = importdata(filename1,delimiterIn);
+            solinit = bvpinit(xinit,@mat6init_tension,c1); %compute the initial guess used by bvp4c
+            options = bvpset('RelTol',1e-5,'AbsTol',1e-5,'Nmax',1000);
+            sol = bvp4c(@ACodefun,@ACbcfun,solinit,options); %find the shape equations foi
+            
+            
+           
+            alpha1=a_0*exp(-1.0/(2*sigma2^2)*(x1).^2);
+            alpha=zeros(size(x1));
+  
+            
+            C=zeros(size(x1));
+            H=zeros(size(x1));
+            H2=zeros(size(x1));
+  
+            A = zeros(size(x1,2), size(x1,2)); %structures for the linear system
+            b = zeros(size(x1));
+  
+          
+            for l=1:t_steps
+        
+                solf = deval(sol,x1);
+                
+                r=solf(2,:);
+                z=solf(4,:);
+                phi=solf(1,:);
+                area=solf(3,:);
+                M=solf(5,:);
+                U=solf(6,:);
+                T=U.*cos(phi);
+                Q=-U.*sin(phi);
+                
+                
+                
+                H=M+C_0_*alpha1;   
+                
+                
+                K1=K1_.*heaviside(H-H_0);
+                
+                K2=K2_*ones(size(x1));
+                
+                for m=1:size(x1,2) %compute the matrix A
+          
+                    if m==1
+                        A(m,m)=  1 + 2*F1 - 2*F2*mu*Q(m+1)+K2(m)*dt;
+                        A(m,m+1)= -2*F1 - 2*F2*mu*Q(m);
+            
+                    elseif m==size(x1,2)
+          
+                        A(m,m)= 1 + 2*F1 + 2*F2*mu*Q(m-1)+ K2(m)*dt;
+                        A(m,m-1)= -2*F1 +2*F2*mu*Q(m) ;
+                    else
+                        A(m,m)=1 + 0.5*F1*(r(m+1)+r(m))./(r(m)) + 0.5*F1*(r(m)+r(m-1))./(r(m))...
+                            -(F2/4)*mu*(r(m+1)+r(m))*(Q(m+1)+Q(m))/r(m) + (F2/4)*mu*(r(m)+r(m-1))*(Q(m)+Q(m-1))/r(m)...
+                             +dt*K2(m);
+                        A(m,m+1)=-0.5*F1*(r(m+1)+r(m))./(r(m))   - (F2/4)*mu*(r(m+1)+r(m))*(Q(m+1)+Q(m))/r(m) ;
+                        A(m,m-1)=-0.5*F1*(r(m)+r(m-1))./(r(m))   + (F2/4)*mu*(r(m)+r(m-1))*(Q(m)+Q(m-1))/r(m) ;
+                    end    
+                end   
+       
+                for m=1:size(x1,2) %compute the entries of the vector b in Ax=b
+                
+                        b(m)=  alpha1(m) + K1(m)*dt;
+                end
+                
+                bt=transpose(b);
+         
+                if 1.0/cond(A)< 1.e-6
+                    break
+                end
+                alpha = linsolve(A,bt);
+         
+                alphat=transpose(alpha);
+         
+          
+                sol2 = bvp4c(@odefun7_ev,@bcfun7_ev,sol,options);
+                x_ode=sol2.x;
+                %tol=sol2.stats.maxres;
+          
+                sol2f=deval(sol2,x1);
+                phi2=sol2f(1,:);
+                r2=sol2f(2,:);
+                A2=sol2f(3,:);
+                z2=sol2f(4,:);
+                M2=sol2f(5,:);
+                U2=sol2f(6,:);
+                Q2=-U2.*sin(phi2);
+                T2=U2.*cos(phi2);
+         
+          
+     
+                C(m)=C_0_*alphat(m); %spontaneous curvature  
+                H2=M2+C; %mean curvature
+                
+                t=t+dt;
+                save(sprintf('./K2=5/min7_%d_%d_%d.txt',n,j,l)','x1', 'alphat', 'phi2','r2','A2','z2','M2', 'Q2','T2', 'U2', 'x_ode','t','-ascii')
+         
+                alpha1=alphat;
+                sol=sol2; 
+          
+            end
+
